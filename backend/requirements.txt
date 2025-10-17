@@ -1,0 +1,22 @@
+# BabyPluto Backend Requirements
+# Python 3.8+
+
+# Web Framework
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+
+# System Monitoring
+psutil==6.1.0
+
+# Data Validation
+pydantic==2.10.0
+
+# Utilities
+python-multipart==0.0.20
+
+# Windows-specific (install only on Windows)
+pywin32==308; sys_platform == 'win32'
+
+# Optional: Advanced features
+# python-nmap==0.7.1  # For network scanning
+# yara-python==4.5.1  # For malware detection
