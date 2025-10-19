@@ -1,21 +1,23 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { SecurityMetrics } from "@/components/security/SecurityMetrics";
-import { generateMockScanResults } from "@/utils/mockData";
 import { ScanResults } from "@/types/security";
-import { Shield, Play, RefreshCw, Clock, CheckCircle } from "lucide-react";
+import { Shield, Play, RefreshCw, Clock, CheckCircle, AlertTriangle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { useQuickScan, useFullScan } from "@/hooks/useSecurityAPI";
+import { ConnectionStatus } from "@/components/layout/ConnectionStatus";
 
 export default function Dashboard() {
   const [scanResults, setScanResults] = useState<ScanResults | null>(null);
-  const [isScanning, setIsScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
+  
+  const quickScanMutation = useQuickScan();
+  const fullScanMutation = useFullScan();
 
   const runQuickScan = async () => {
-    setIsScanning(true);
     setScanProgress(0);
     
     toast({
@@ -34,25 +36,58 @@ export default function Dashboard() {
       });
     }, 200);
 
-    // Simulate scan duration
-    setTimeout(() => {
-      const results = generateMockScanResults();
-      setScanResults(results);
-      setIsScanning(false);
+    try {
+      const results = await quickScanMutation.mutateAsync();
+      setScanResults(results as ScanResults);
       setScanProgress(100);
+      clearInterval(progressInterval);
       
       toast({
         title: "Scan Complete",
-        description: `Scan completed in ${(results.scan_duration / 1000).toFixed(1)}s`,
+        description: `Quick scan completed successfully`,
       });
-    }, 3000);
+    } catch (error) {
+      clearInterval(progressInterval);
+      setScanProgress(0);
+      // Error toast is handled by the hook
+    }
   };
 
-  useEffect(() => {
-    // Load cached results on mount
-    const results = generateMockScanResults();
-    setScanResults(results);
-  }, []);
+  const runFullScan = async () => {
+    setScanProgress(0);
+    
+    toast({
+      title: "Full Security Scan Started",
+      description: "Running comprehensive security analysis...",
+    });
+
+    const progressInterval = setInterval(() => {
+      setScanProgress(prev => {
+        if (prev >= 95) {
+          clearInterval(progressInterval);
+          return 100;
+        }
+        return prev + Math.random() * 10;
+      });
+    }, 300);
+
+    try {
+      const results = await fullScanMutation.mutateAsync();
+      setScanResults(results as ScanResults);
+      setScanProgress(100);
+      clearInterval(progressInterval);
+      
+      toast({
+        title: "Full Scan Complete",
+        description: `Comprehensive scan completed successfully`,
+      });
+    } catch (error) {
+      clearInterval(progressInterval);
+      setScanProgress(0);
+    }
+  };
+
+  const isScanning = quickScanMutation.isPending || fullScanMutation.isPending;
 
   const getSystemStatus = (): { status: string; color: "default" | "destructive" | "outline" | "secondary" } => {
     if (!scanResults) return { status: "unknown", color: "secondary" };
@@ -78,11 +113,12 @@ export default function Dashboard() {
             Monitor your system security and detect potential threats
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-3">
+          <ConnectionStatus />
           <Button
             onClick={runQuickScan}
             disabled={isScanning}
-            className="bg-primary hover:bg-primary/90"
+            variant="default"
           >
             {isScanning ? (
               <>
@@ -93,6 +129,23 @@ export default function Dashboard() {
               <>
                 <Play className="mr-2 h-4 w-4" />
                 Quick Scan
+              </>
+            )}
+          </Button>
+          <Button
+            onClick={runFullScan}
+            disabled={isScanning}
+            variant="outline"
+          >
+            {isScanning ? (
+              <>
+                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                Scanning...
+              </>
+            ) : (
+              <>
+                <Shield className="mr-2 h-4 w-4" />
+                Full Scan
               </>
             )}
           </Button>

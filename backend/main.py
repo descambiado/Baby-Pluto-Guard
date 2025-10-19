@@ -16,6 +16,7 @@ from security.ports import scan_open_ports
 from security.startup import scan_startup_items
 from security.integrity import scan_file_integrity
 from security.analyzer import generate_metrics, generate_alerts
+from security.baseline import baseline_manager
 
 app = FastAPI(
     title="BabyPluto Security API",
@@ -192,6 +193,124 @@ def get_startup():
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get startup items: {str(e)}")
+
+
+@app.get("/api/integrity")
+def get_file_integrity():
+    """Get file integrity checks"""
+    try:
+        import platform
+        from security.integrity import get_critical_files
+        
+        critical_files = get_critical_files()
+        file_integrity = scan_file_integrity(critical_files)
+        
+        return {
+            "files": file_integrity,
+            "count": len(file_integrity),
+            "timestamp": int(time.time())
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to check file integrity: {str(e)}")
+
+
+# ==================== BASELINE ENDPOINTS ====================
+
+@app.post("/api/baseline/create")
+def create_baseline(name: str, description: str = ""):
+    """Create a new baseline of the current system state"""
+    try:
+        baseline = baseline_manager.create_baseline(name, description)
+        return {
+            "success": True,
+            "baseline": baseline,
+            "message": f"Baseline '{name}' created successfully"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to create baseline: {str(e)}")
+
+
+@app.get("/api/baseline/active")
+def get_active_baseline():
+    """Get the currently active baseline"""
+    try:
+        baseline = baseline_manager.get_active_baseline()
+        if not baseline:
+            return {
+                "exists": False,
+                "message": "No active baseline found"
+            }
+        return {
+            "exists": True,
+            "baseline": baseline
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get active baseline: {str(e)}")
+
+
+@app.get("/api/baseline/list")
+def list_baselines():
+    """List all baselines"""
+    try:
+        baselines = baseline_manager.list_baselines()
+        return {
+            "baselines": baselines,
+            "count": len(baselines)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to list baselines: {str(e)}")
+
+
+@app.get("/api/baseline/{baseline_id}")
+def get_baseline(baseline_id: int):
+    """Get a specific baseline"""
+    try:
+        baseline = baseline_manager.get_baseline(baseline_id)
+        if not baseline:
+            raise HTTPException(status_code=404, detail="Baseline not found")
+        return baseline
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get baseline: {str(e)}")
+
+
+@app.post("/api/baseline/{baseline_id}/activate")
+def activate_baseline(baseline_id: int):
+    """Set a baseline as active"""
+    try:
+        success = baseline_manager.set_active_baseline(baseline_id)
+        return {
+            "success": success,
+            "message": f"Baseline {baseline_id} activated"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to activate baseline: {str(e)}")
+
+
+@app.delete("/api/baseline/{baseline_id}")
+def delete_baseline(baseline_id: int):
+    """Delete a baseline"""
+    try:
+        success = baseline_manager.delete_baseline(baseline_id)
+        return {
+            "success": success,
+            "message": f"Baseline {baseline_id} deleted"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete baseline: {str(e)}")
+
+
+@app.post("/api/baseline/compare")
+def compare_with_baseline(baseline_id: int = None):
+    """Compare current system state with baseline"""
+    try:
+        comparison = baseline_manager.compare_with_baseline(baseline_id)
+        return comparison
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to compare with baseline: {str(e)}")
 
 
 @app.get("/health")

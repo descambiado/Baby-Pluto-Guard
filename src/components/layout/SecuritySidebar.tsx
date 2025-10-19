@@ -1,4 +1,4 @@
-import { Shield, Activity, Network, HardDrive, AlertTriangle, FileText, Settings, Scan } from "lucide-react";
+import { Shield, Activity, Network, HardDrive, AlertTriangle, FileText, Settings, Scan, Database } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
   Sidebar,
@@ -17,13 +17,13 @@ const navigationItems = [
   { title: "Dashboard", url: "/", icon: Shield },
   { title: "Process Monitor", url: "/processes", icon: Activity },
   { title: "Network Security", url: "/network", icon: Network },
-  { title: "File Integrity", url: "/files", icon: HardDrive },
-  { title: "Alerts", url: "/alerts", icon: AlertTriangle },
+  { title: "Startup Items", url: "/startup", icon: Scan },
+  { title: "File Integrity", url: "/integrity", icon: HardDrive },
+  { title: "System Baseline", url: "/baseline", icon: Database },
   { title: "Reports", url: "/reports", icon: FileText },
 ];
 
 const toolItems = [
-  { title: "Quick Scan", url: "/scan/quick", icon: Scan },
   { title: "Settings", url: "/settings", icon: Settings },
 ];
 

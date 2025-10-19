@@ -106,5 +106,33 @@ export function useStartupItems() {
       if (!response.ok) throw new Error('Failed to fetch startup items');
       return response.json();
     },
+    staleTime: 60000, // 1 minute
+  });
+}
+
+export function useFileIntegrity() {
+  return useQuery({
+    queryKey: ['fileIntegrity'],
+    queryFn: async () => {
+      const response = await fetch(`${API_BASE_URL}/api/integrity`);
+      if (!response.ok) throw new Error('Failed to fetch file integrity data');
+      return response.json();
+    },
+    staleTime: 60000, // 1 minute
+  });
+}
+
+export function useBackendHealth() {
+  return useQuery({
+    queryKey: ['health'],
+    queryFn: async () => {
+      const response = await fetch(`${API_BASE_URL}/health`);
+      if (!response.ok) throw new Error('Backend is not responding');
+      return response.json();
+    },
+    retry: 1,
+    retryDelay: 500,
+    refetchInterval: 30000, // Check every 30 seconds
+    staleTime: 10000,
   });
 }

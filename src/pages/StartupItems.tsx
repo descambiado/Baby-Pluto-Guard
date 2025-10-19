@@ -1,31 +1,35 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { StartupTable } from '@/components/security/StartupTable';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, Zap } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { generateMockScanResults } from '@/utils/mockData';
-import { StartupItem } from '@/types/security';
+import { RefreshCw, Zap, AlertCircle } from 'lucide-react';
+import { useStartupItems } from '@/hooks/useSecurityAPI';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export default function StartupItems() {
-  const [startupItems, setStartupItems] = useState<StartupItem[]>([]);
-  const [loading, setLoading] = useState(false);
+  const { data: startupItems, isLoading, isError, error, refetch } = useStartupItems();
 
-  useEffect(() => {
-    loadStartupItems();
-  }, []);
-
-  const loadStartupItems = () => {
-    setLoading(true);
-    setTimeout(() => {
-      const mockData = generateMockScanResults();
-      setStartupItems(mockData.startup_items);
-      setLoading(false);
-    }, 600);
-  };
-
-  const suspiciousCount = startupItems.filter(item => 
+  const suspiciousCount = startupItems?.filter(item => 
     item.risk_level === 'high' || item.risk_level === 'medium'
-  ).length;
+  ).length || 0;
+
+  if (isError) {
+    return (
+      <div className="space-y-6">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Connection Error</AlertTitle>
+          <AlertDescription>
+            {error instanceof Error ? error.message : 'Failed to load startup items'}
+          </AlertDescription>
+        </Alert>
+        <Button onClick={() => refetch()}>
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Retry
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -39,8 +43,8 @@ export default function StartupItems() {
             Programs that run automatically at system startup
           </p>
         </div>
-        <Button onClick={loadStartupItems} disabled={loading}>
-          <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+        <Button onClick={() => refetch()} disabled={isLoading}>
+          <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
           Refresh
         </Button>
       </div>
@@ -51,7 +55,11 @@ export default function StartupItems() {
             <CardTitle className="text-sm font-medium">Total Items</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{startupItems.length}</div>
+            {isLoading ? (
+              <Skeleton className="h-8 w-16" />
+            ) : (
+              <div className="text-2xl font-bold">{startupItems?.length || 0}</div>
+            )}
           </CardContent>
         </Card>
 
@@ -60,7 +68,11 @@ export default function StartupItems() {
             <CardTitle className="text-sm font-medium">Suspicious Items</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-destructive">{suspiciousCount}</div>
+            {isLoading ? (
+              <Skeleton className="h-8 w-16" />
+            ) : (
+              <div className="text-2xl font-bold text-destructive">{suspiciousCount}</div>
+            )}
           </CardContent>
         </Card>
 
@@ -69,9 +81,13 @@ export default function StartupItems() {
             <CardTitle className="text-sm font-medium">Enabled</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {startupItems.filter(item => item.enabled).length}
-            </div>
+            {isLoading ? (
+              <Skeleton className="h-8 w-16" />
+            ) : (
+              <div className="text-2xl font-bold">
+                {startupItems?.filter(item => item.enabled).length || 0}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -84,7 +100,15 @@ export default function StartupItems() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <StartupTable startupItems={startupItems} />
+          {isLoading ? (
+            <div className="space-y-2">
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+            </div>
+          ) : (
+            <StartupTable startupItems={startupItems || []} />
+          )}
         </CardContent>
       </Card>
     </div>

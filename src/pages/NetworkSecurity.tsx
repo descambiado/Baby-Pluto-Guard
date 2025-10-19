@@ -1,27 +1,31 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { PortScanner } from '@/components/security/PortScanner';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, Wifi } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { generateMockScanResults } from '@/utils/mockData';
-import { NetworkPort } from '@/types/security';
+import { RefreshCw, Wifi, AlertCircle } from 'lucide-react';
+import { usePorts } from '@/hooks/useSecurityAPI';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export default function NetworkSecurity() {
-  const [ports, setPorts] = useState<NetworkPort[]>([]);
-  const [loading, setLoading] = useState(false);
+  const { data: ports, isLoading, isError, error, refetch } = usePorts();
 
-  useEffect(() => {
-    loadPorts();
-  }, []);
-
-  const loadPorts = () => {
-    setLoading(true);
-    setTimeout(() => {
-      const mockData = generateMockScanResults();
-      setPorts(mockData.ports);
-      setLoading(false);
-    }, 800);
-  };
+  if (isError) {
+    return (
+      <div className="space-y-6">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Connection Error</AlertTitle>
+          <AlertDescription>
+            {error instanceof Error ? error.message : 'Failed to load network ports'}
+          </AlertDescription>
+        </Alert>
+        <Button onClick={() => refetch()}>
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Retry
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -35,8 +39,8 @@ export default function NetworkSecurity() {
             Monitor network ports and connections
           </p>
         </div>
-        <Button onClick={loadPorts} disabled={loading}>
-          <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+        <Button onClick={() => refetch()} disabled={isLoading}>
+          <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
           Scan Ports
         </Button>
       </div>
@@ -49,7 +53,15 @@ export default function NetworkSecurity() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <PortScanner ports={ports} />
+          {isLoading ? (
+            <div className="space-y-2">
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+            </div>
+          ) : (
+            <PortScanner ports={ports || []} />
+          )}
         </CardContent>
       </Card>
     </div>

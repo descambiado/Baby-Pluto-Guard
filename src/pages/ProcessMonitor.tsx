@@ -1,31 +1,38 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ProcessTable } from '@/components/security/ProcessTable';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, Activity } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { generateMockScanResults } from '@/utils/mockData';
-import { SecurityProcess } from '@/types/security';
+import { RefreshCw, Activity, AlertCircle } from 'lucide-react';
+import { useProcesses } from '@/hooks/useSecurityAPI';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export default function ProcessMonitor() {
-  const [processes, setProcesses] = useState<SecurityProcess[]>([]);
-  const [loading, setLoading] = useState(false);
+  const { data: processes, isLoading, isError, error, refetch } = useProcesses();
 
-  useEffect(() => {
-    loadProcesses();
-  }, []);
+  const suspiciousCount = processes?.filter(proc => 
+    proc.risk_level === 'high' || proc.risk_level === 'medium'
+  ).length || 0;
 
-  const loadProcesses = () => {
-    setLoading(true);
-    setTimeout(() => {
-      const mockData = generateMockScanResults();
-      setProcesses(mockData.processes);
-      setLoading(false);
-    }, 500);
-  };
+  const avgCpu = processes?.reduce((acc, p) => acc + p.cpu_percent, 0) / (processes?.length || 1) || 0;
+  const avgMemory = processes?.reduce((acc, p) => acc + p.memory_percent, 0) / (processes?.length || 1) || 0;
 
-  const suspiciousCount = processes.filter(p => p.risk_level === 'high' || p.risk_level === 'medium').length;
-  const avgCpu = processes.reduce((acc, p) => acc + p.cpu_percent, 0) / processes.length || 0;
-  const avgMemory = processes.reduce((acc, p) => acc + p.memory_percent, 0) / processes.length || 0;
+  if (isError) {
+    return (
+      <div className="space-y-6">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Connection Error</AlertTitle>
+          <AlertDescription>
+            {error instanceof Error ? error.message : 'Failed to load processes'}
+          </AlertDescription>
+        </Alert>
+        <Button onClick={() => refetch()}>
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Retry
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -36,11 +43,11 @@ export default function ProcessMonitor() {
             Process Monitor
           </h1>
           <p className="text-muted-foreground mt-1">
-            Real-time monitoring of system processes
+            Real-time monitoring of running processes
           </p>
         </div>
-        <Button onClick={loadProcesses} disabled={loading}>
-          <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+        <Button onClick={() => refetch()} disabled={isLoading}>
+          <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
           Refresh
         </Button>
       </div>
@@ -51,7 +58,11 @@ export default function ProcessMonitor() {
             <CardTitle className="text-sm font-medium">Total Processes</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{processes.length}</div>
+            {isLoading ? (
+              <Skeleton className="h-8 w-16" />
+            ) : (
+              <div className="text-2xl font-bold">{processes?.length || 0}</div>
+            )}
           </CardContent>
         </Card>
 
@@ -60,7 +71,11 @@ export default function ProcessMonitor() {
             <CardTitle className="text-sm font-medium">Suspicious</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-destructive">{suspiciousCount}</div>
+            {isLoading ? (
+              <Skeleton className="h-8 w-16" />
+            ) : (
+              <div className="text-2xl font-bold text-destructive">{suspiciousCount}</div>
+            )}
           </CardContent>
         </Card>
 
@@ -69,7 +84,11 @@ export default function ProcessMonitor() {
             <CardTitle className="text-sm font-medium">Avg CPU Usage</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{avgCpu.toFixed(1)}%</div>
+            {isLoading ? (
+              <Skeleton className="h-8 w-16" />
+            ) : (
+              <div className="text-2xl font-bold">{avgCpu.toFixed(1)}%</div>
+            )}
           </CardContent>
         </Card>
 
@@ -78,7 +97,11 @@ export default function ProcessMonitor() {
             <CardTitle className="text-sm font-medium">Avg Memory</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{avgMemory.toFixed(1)}%</div>
+            {isLoading ? (
+              <Skeleton className="h-8 w-16" />
+            ) : (
+              <div className="text-2xl font-bold">{avgMemory.toFixed(1)}%</div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -87,11 +110,19 @@ export default function ProcessMonitor() {
         <CardHeader>
           <CardTitle>Active Processes</CardTitle>
           <CardDescription>
-            All running processes with resource usage and risk assessment
+            All currently running processes with security risk assessment
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <ProcessTable processes={processes} />
+          {isLoading ? (
+            <div className="space-y-2">
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+            </div>
+          ) : (
+            <ProcessTable processes={processes || []} />
+          )}
         </CardContent>
       </Card>
     </div>
