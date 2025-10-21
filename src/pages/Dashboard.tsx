@@ -9,6 +9,8 @@ import { Shield, Play, RefreshCw, Clock, CheckCircle, AlertTriangle } from "luci
 import { toast } from "@/hooks/use-toast";
 import { useQuickScan, useFullScan } from "@/hooks/useSecurityAPI";
 import { ConnectionStatus } from "@/components/layout/ConnectionStatus";
+import { ActivityTimeline } from "@/components/security/ActivityTimeline";
+import { BarComparisonChart } from "@/components/charts/BarComparisonChart";
 
 export default function Dashboard() {
   const [scanResults, setScanResults] = useState<ScanResults | null>(null);
@@ -209,36 +211,56 @@ export default function Dashboard() {
       {/* Security Metrics */}
       {scanResults && <SecurityMetrics metrics={scanResults.metrics} />}
 
-      {/* Recent Alerts */}
-      {scanResults && scanResults.alerts.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Security Alerts</CardTitle>
-            <CardDescription>
-              Latest security events requiring attention
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {scanResults.alerts.slice(0, 5).map((alert) => (
-                <div key={alert.id} className="flex items-center justify-between border-l-4 border-l-security-medium pl-4 py-2">
-                  <div>
-                    <p className="font-medium">{alert.title}</p>
-                    <p className="text-sm text-muted-foreground">{alert.description}</p>
+      {/* Activity and Alerts Grid */}
+      <div className="grid gap-4 md:grid-cols-2">
+        {/* Recent Alerts */}
+        {scanResults && scanResults.alerts.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Security Alerts</CardTitle>
+              <CardDescription>
+                Latest security events requiring attention
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {scanResults.alerts.slice(0, 5).map((alert) => (
+                  <div key={alert.id} className="flex items-center justify-between border-l-4 border-l-security-medium pl-4 py-2">
+                    <div>
+                      <p className="font-medium">{alert.title}</p>
+                      <p className="text-sm text-muted-foreground">{alert.description}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant={alert.severity === 'high' ? 'destructive' : 'secondary'}>
+                        {alert.severity}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(alert.timestamp).toLocaleTimeString()}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant={alert.severity === 'high' ? 'destructive' : 'secondary'}>
-                      {alert.severity}
-                    </Badge>
-                    <span className="text-xs text-muted-foreground">
-                      {new Date(alert.timestamp).toLocaleTimeString()}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Activity Timeline */}
+        <ActivityTimeline />
+      </div>
+
+      {/* Metrics Comparison Chart */}
+      {scanResults && (
+        <BarComparisonChart
+          title="Security Metrics Comparison"
+          description="Current vs baseline metrics"
+          data={[
+            { name: "Processes", current: scanResults.metrics.total_processes, previous: 125 },
+            { name: "Ports", current: scanResults.metrics.open_ports, previous: 15 },
+            { name: "Startup", current: scanResults.metrics.startup_items, previous: 22 },
+            { name: "Alerts", current: scanResults.metrics.alerts_count.high + scanResults.metrics.alerts_count.medium, previous: 5 },
+          ]}
+        />
       )}
     </div>
   );

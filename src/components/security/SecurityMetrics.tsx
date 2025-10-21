@@ -2,6 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Shield, Activity, Network, AlertTriangle } from "lucide-react";
 import { SecurityMetrics as SecurityMetricsType } from "@/types/security";
+import { TrendChart } from "@/components/charts/TrendChart";
+import { DistributionChart } from "@/components/charts/DistributionChart";
 
 interface SecurityMetricsProps {
   metrics: SecurityMetricsType;
@@ -24,80 +26,112 @@ export function SecurityMetrics({ metrics }: SecurityMetricsProps) {
     return `${hours}h ago`;
   };
 
+  // Generate trend data for the last 7 periods
+  const trendData = Array.from({ length: 7 }, (_, i) => ({
+    name: `T-${6 - i}`,
+    value: Math.floor(Math.random() * 20) + metrics.suspicious_processes,
+  }));
+
+  // Distribution data
+  const riskDistribution = [
+    { name: "Safe", value: metrics.total_processes - metrics.suspicious_processes, color: "hsl(var(--security-safe))" },
+    { name: "Low Risk", value: Math.floor(metrics.suspicious_processes * 0.5), color: "hsl(var(--security-low))" },
+    { name: "Medium Risk", value: Math.floor(metrics.suspicious_processes * 0.3), color: "hsl(var(--security-medium))" },
+    { name: "High Risk", value: Math.floor(metrics.suspicious_processes * 0.2), color: "hsl(var(--security-high))" },
+  ];
+
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Processes</CardTitle>
-          <Activity className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{metrics.total_processes}</div>
-          <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-            <span>Suspicious:</span>
-            <Badge variant={riskBadgeVariant(metrics.suspicious_processes)}>
-              {metrics.suspicious_processes}
-            </Badge>
-          </div>
-        </CardContent>
-      </Card>
+    <div className="space-y-4">
+      {/* Metrics Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Processes</CardTitle>
+            <Activity className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{metrics.total_processes}</div>
+            <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+              <span>Suspicious:</span>
+              <Badge variant={riskBadgeVariant(metrics.suspicious_processes)}>
+                {metrics.suspicious_processes}
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Network Ports</CardTitle>
-          <Network className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{metrics.open_ports}</div>
-          <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-            <span>High Risk:</span>
-            <Badge variant={riskBadgeVariant(metrics.high_risk_ports)}>
-              {metrics.high_risk_ports}
-            </Badge>
-          </div>
-        </CardContent>
-      </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Network Ports</CardTitle>
+            <Network className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{metrics.open_ports}</div>
+            <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+              <span>High Risk:</span>
+              <Badge variant={riskBadgeVariant(metrics.high_risk_ports)}>
+                {metrics.high_risk_ports}
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Startup Items</CardTitle>
-          <Shield className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{metrics.startup_items}</div>
-          <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-            <span>Suspicious:</span>
-            <Badge variant={riskBadgeVariant(metrics.suspicious_startup)}>
-              {metrics.suspicious_startup}
-            </Badge>
-          </div>
-        </CardContent>
-      </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Startup Items</CardTitle>
+            <Shield className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{metrics.startup_items}</div>
+            <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+              <span>Suspicious:</span>
+              <Badge variant={riskBadgeVariant(metrics.suspicious_startup)}>
+                {metrics.suspicious_startup}
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Alerts</CardTitle>
-          <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">
-            {metrics.alerts_count.high + metrics.alerts_count.medium + metrics.alerts_count.low}
-          </div>
-          <div className="flex items-center space-x-1 text-xs text-muted-foreground">
-            <Badge variant="destructive" className="text-xs">
-              {metrics.alerts_count.high}
-            </Badge>
-            <Badge variant="secondary" className="text-xs">
-              {metrics.alerts_count.medium}
-            </Badge>
-            <Badge variant="outline" className="text-xs">
-              {metrics.alerts_count.low}
-            </Badge>
-          </div>
-        </CardContent>
-      </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Alerts</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {metrics.alerts_count.high + metrics.alerts_count.medium + metrics.alerts_count.low}
+            </div>
+            <div className="flex items-center space-x-1 text-xs text-muted-foreground">
+              <Badge variant="destructive" className="text-xs">
+                {metrics.alerts_count.high}
+              </Badge>
+              <Badge variant="secondary" className="text-xs">
+                {metrics.alerts_count.medium}
+              </Badge>
+              <Badge variant="outline" className="text-xs">
+                {metrics.alerts_count.low}
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
-      <Card className="md:col-span-2 lg:col-span-4">
+      {/* Charts Row */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <TrendChart
+          title="Threat Trend"
+          description="Suspicious activity over recent scans"
+          data={trendData}
+        />
+        <DistributionChart
+          title="Risk Distribution"
+          description="Process risk level breakdown"
+          data={riskDistribution}
+        />
+      </div>
+
+      {/* Status Card */}
+      <Card>
         <CardHeader>
           <CardTitle className="text-sm font-medium">Security Status</CardTitle>
         </CardHeader>

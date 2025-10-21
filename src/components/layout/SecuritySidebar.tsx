@@ -43,8 +43,22 @@ export function SecuritySidebar() {
 
       <SidebarContent>
         <SidebarGroup>
+          {!collapsed && (
+            <div className="flex items-center gap-2 px-4 py-3 mb-2">
+              <img src="/logo.png" alt="Baby Pluto Guard Logo" className="h-8 w-8" />
+              <div className="flex flex-col">
+                <span className="text-sm font-bold text-sidebar-primary">Baby Pluto Guard</span>
+                <span className="text-xs text-sidebar-foreground/60">Security Scanner</span>
+              </div>
+            </div>
+          )}
+          {collapsed && (
+            <div className="flex items-center justify-center px-2 py-3 mb-2">
+              <img src="/logo.png" alt="Baby Pluto Guard Logo" className="h-8 w-8" />
+            </div>
+          )}
           <SidebarGroupLabel className="text-sidebar-primary font-semibold">
-            {!collapsed && "BabyPluto Security"}
+            {!collapsed && "Security Modules"}
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
