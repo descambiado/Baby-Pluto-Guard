@@ -5,12 +5,20 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { SecurityMetrics } from "@/components/security/SecurityMetrics";
 import { ScanResults } from "@/types/security";
-import { Shield, Play, RefreshCw, Clock, CheckCircle, AlertTriangle } from "lucide-react";
+import { Shield, Play, RefreshCw, Clock, CheckCircle, Download, HelpCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useQuickScan, useFullScan } from "@/hooks/useSecurityAPI";
 import { ConnectionStatus } from "@/components/layout/ConnectionStatus";
 import { ActivityTimeline } from "@/components/security/ActivityTimeline";
 import { BarComparisonChart } from "@/components/charts/BarComparisonChart";
+import { HelpDialog } from "@/components/ui/help-dialog";
+import { exportToJSON } from "@/utils/exportUtils";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export default function Dashboard() {
   const [scanResults, setScanResults] = useState<ScanResults | null>(null);
@@ -102,55 +110,134 @@ export default function Dashboard() {
 
   const systemStatus = getSystemStatus();
 
+  const handleExportResults = () => {
+    if (!scanResults) {
+      toast({
+        variant: "destructive",
+        title: "No Data",
+        description: "Run a scan first to export results.",
+      });
+      return;
+    }
+    
+    exportToJSON(scanResults, `babypluto-scan-${Date.now()}`);
+    toast({
+      title: "Export Successful",
+      description: "Scan results exported as JSON file.",
+    });
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-            <Shield className="h-8 w-8 text-primary" />
-            BabyPluto Security Dashboard
-          </h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+              <Shield className="h-8 w-8 text-primary" />
+              BabyPluto Security Dashboard
+            </h1>
+            <HelpDialog 
+              title="Dashboard Help"
+              description="Learn how to use the security dashboard effectively"
+            >
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-semibold mb-2">Quick Scan</h4>
+                  <p>Performs a rapid security assessment of your system, checking processes, ports, and startup items.</p>
+                </div>
+                <div>
+                  <h4 className="font-semibold mb-2">Full Scan</h4>
+                  <p>Comprehensive security analysis including file integrity checks and detailed baseline comparison.</p>
+                </div>
+                <div>
+                  <h4 className="font-semibold mb-2">Export Results</h4>
+                  <p>Save scan results as JSON for documentation, sharing, or further analysis.</p>
+                </div>
+                <div>
+                  <h4 className="font-semibold mb-2">Connection Status</h4>
+                  <p>Green badge indicates backend is online. If offline, ensure Python backend is running with <code>run.sh</code> or <code>run.bat</code>.</p>
+                </div>
+              </div>
+            </HelpDialog>
+          </div>
           <p className="text-muted-foreground">
             Monitor your system security and detect potential threats
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <ConnectionStatus />
-          <Button
-            onClick={runQuickScan}
-            disabled={isScanning}
-            variant="default"
-          >
-            {isScanning ? (
-              <>
-                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                Scanning...
-              </>
-            ) : (
-              <>
-                <Play className="mr-2 h-4 w-4" />
-                Quick Scan
-              </>
-            )}
-          </Button>
-          <Button
-            onClick={runFullScan}
-            disabled={isScanning}
-            variant="outline"
-          >
-            {isScanning ? (
-              <>
-                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                Scanning...
-              </>
-            ) : (
-              <>
-                <Shield className="mr-2 h-4 w-4" />
-                Full Scan
-              </>
-            )}
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={runQuickScan}
+                  disabled={isScanning}
+                  variant="default"
+                >
+                  {isScanning ? (
+                    <>
+                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                      Scanning...
+                    </>
+                  ) : (
+                    <>
+                      <Play className="mr-2 h-4 w-4" />
+                      Quick Scan
+                    </>
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Rapid security assessment (~30 seconds)</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={runFullScan}
+                  disabled={isScanning}
+                  variant="outline"
+                >
+                  {isScanning ? (
+                    <>
+                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                      Scanning...
+                    </>
+                  ) : (
+                    <>
+                      <Shield className="mr-2 h-4 w-4" />
+                      Full Scan
+                    </>
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Comprehensive analysis with file integrity (~2 minutes)</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={handleExportResults}
+                  disabled={!scanResults}
+                  variant="ghost"
+                  size="icon"
+                >
+                  <Download className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Export scan results as JSON</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
 

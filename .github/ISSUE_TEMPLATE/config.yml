@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 GitHub Discussions
+    url: https://github.com/Descambiado/baby-pluto-guard/discussions
+    about: Ask questions and discuss ideas with the community
+  - name: 📚 Documentation
+    url: https://github.com/Descambiado/baby-pluto-guard#documentation
+    about: Read the full documentation and guides
+  - name: 🐦 Twitter/X
+    url: https://x.com/descambiado
+    about: Follow for updates and announcements

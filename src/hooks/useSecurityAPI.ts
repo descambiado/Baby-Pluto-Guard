@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ScanResults } from '@/types/security';
+import { ScanResults, SecurityProcess, NetworkPort, StartupItem, FileIntegrityCheck } from '@/types/security';
+import { toast } from '@/hooks/use-toast';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -31,6 +32,13 @@ export function useQuickScan() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['scanResults'] });
     },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Scan Failed",
+        description: error.message || "Could not connect to backend server. Make sure it's running on port 8000.",
+      });
+    },
   });
 }
 
@@ -55,6 +63,13 @@ export function useFullScan() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['scanResults'] });
     },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Full Scan Failed",
+        description: error.message || "Could not connect to backend server. Make sure it's running on port 8000.",
+      });
+    },
   });
 }
 
@@ -75,7 +90,7 @@ export function useSystemInfo() {
 }
 
 export function useProcesses() {
-  return useQuery({
+  return useQuery<SecurityProcess[]>({
     queryKey: ['processes'],
     queryFn: async () => {
       const response = await fetch(`${API_BASE_URL}/api/processes`);
@@ -87,7 +102,7 @@ export function useProcesses() {
 }
 
 export function usePorts() {
-  return useQuery({
+  return useQuery<NetworkPort[]>({
     queryKey: ['ports'],
     queryFn: async () => {
       const response = await fetch(`${API_BASE_URL}/api/ports`);
@@ -99,7 +114,7 @@ export function usePorts() {
 }
 
 export function useStartupItems() {
-  return useQuery({
+  return useQuery<StartupItem[]>({
     queryKey: ['startup'],
     queryFn: async () => {
       const response = await fetch(`${API_BASE_URL}/api/startup`);
@@ -111,7 +126,7 @@ export function useStartupItems() {
 }
 
 export function useFileIntegrity() {
-  return useQuery({
+  return useQuery<FileIntegrityCheck[]>({
     queryKey: ['fileIntegrity'],
     queryFn: async () => {
       const response = await fetch(`${API_BASE_URL}/api/integrity`);
