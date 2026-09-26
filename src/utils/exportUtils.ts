@@ -12,7 +12,7 @@ export function exportToHTML(data: ScanResults, filename: string = 'babypluto-re
   downloadBlob(blob, `${filename}-${Date.now()}.html`);
 }
 
-export function exportToCSV(data: any[], filename: string = 'babypluto-data') {
+export function exportToCSV(data: Record<string, unknown>[], filename: string = 'babypluto-data') {
   if (data.length === 0) return;
   
   const headers = Object.keys(data[0]);

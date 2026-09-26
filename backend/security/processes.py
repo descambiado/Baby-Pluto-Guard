@@ -58,7 +58,7 @@ def analyze_process_risk(proc_info: Dict) -> str:
     """
     name = proc_info.get('name', '').lower()
     cpu_percent = proc_info.get('cpu_percent', 0)
-    cmdline = ' '.join(proc_info.get('cmdline', [])).lower()
+    cmdline = ' '.join(proc_info.get('cmdline') or []).lower()
     
     # High risk keywords
     high_risk_keywords = [

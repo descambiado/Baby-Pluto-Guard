@@ -6,6 +6,7 @@ FastAPI-based REST API for security scanning
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Dict, List
+import sys
 import uvicorn
 import time
 from datetime import datetime
@@ -323,6 +324,12 @@ def health_check():
 
 
 if __name__ == "__main__":
+    # Windows consoles default to a codepage (e.g. cp1252) that can't encode
+    # the emoji below, which crashes the server before it even starts.
+    if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+
     print("🛡️  BabyPluto Security Scanner API")
     print("=" * 50)
     print(f"Starting server on http://0.0.0.0:8000")

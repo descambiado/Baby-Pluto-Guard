@@ -127,7 +127,7 @@ export function generateMockFileIntegrity(count: number = 8): FileIntegrityCheck
 }
 
 export function generateMockAlerts(count: number = 8): SecurityAlert[] {
-  const alertTemplates = [
+  const alertTemplates: { type: SecurityAlert['type']; title: string; description: string }[] = [
     { type: 'process', title: 'Suspicious Process Detected', description: 'High CPU usage from unknown process' },
     { type: 'port', title: 'Unusual Port Activity', description: 'Non-standard port opened' },
     { type: 'startup', title: 'New Startup Item', description: 'Unknown program added to startup' },
@@ -141,7 +141,7 @@ export function generateMockAlerts(count: number = 8): SecurityAlert[] {
     
     return {
       id: `alert_${i}_${Date.now()}`,
-      type: template.type as any,
+      type: template.type,
       severity,
       title: template.title,
       description: template.description,

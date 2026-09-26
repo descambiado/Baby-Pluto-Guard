@@ -10,7 +10,7 @@ from typing import Dict, List, Any, Optional
 from pathlib import Path
 
 from .processes import scan_processes
-from .ports import scan_ports
+from .ports import scan_open_ports
 from .startup import scan_startup_items
 from .integrity import scan_file_integrity, get_critical_files
 
@@ -58,7 +58,7 @@ class BaselineManager:
         
         # Escanear estado actual
         processes = scan_processes()
-        ports = scan_ports()
+        ports = scan_open_ports()
         startup_items = scan_startup_items()
         
         # Escanear archivos críticos
@@ -176,7 +176,7 @@ class BaselineManager:
         
         # Escanear estado actual
         current_processes = scan_processes()
-        current_ports = scan_ports()
+        current_ports = scan_open_ports()
         current_startup = scan_startup_items()
         
         # Comparar
