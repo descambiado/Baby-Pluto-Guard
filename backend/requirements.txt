@@ -12,7 +12,7 @@ psutil==6.1.0
 pydantic==2.10.0
 
 # Utilities
-python-multipart==0.0.20
+python-multipart==0.0.31
 
 # Required by fastapi.testclient.TestClient (tests/)
 httpx==0.28.1
