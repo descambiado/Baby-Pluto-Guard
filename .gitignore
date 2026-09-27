@@ -16,6 +16,8 @@ dist-ssr
 __pycache__/
 *.pyc
 backend/data/
+backend/.coverage
+backend/coverage.xml
 
 # Editor directories and files
 .vscode/*
