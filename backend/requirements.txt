@@ -2,7 +2,7 @@
 # Python 3.8+
 
 # Web Framework
-fastapi==0.115.0
+fastapi==0.140.2
 uvicorn[standard]==0.32.0
 
 # System Monitoring
@@ -12,7 +12,7 @@ psutil==6.1.0
 pydantic==2.10.0
 
 # Utilities
-python-multipart==0.0.20
+python-multipart==0.0.31
 
 # Required by fastapi.testclient.TestClient (tests/)
 httpx==0.28.1
